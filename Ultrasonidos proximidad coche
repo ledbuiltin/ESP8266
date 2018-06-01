@@ -1,0 +1,64 @@
+/*Este programa funciona como con el detector de proximidad de un coche
+ * a medida que se acerca un objeto emitiremos pititod con una frecuencia proporcional
+ * a la distancia del objeto.
+ * La distancia se represenat tambien en el puerto seie
+ * Si la distancia es menor de 5 cm el pitido es cte.
+ * Si la distancia es mayor de 300 cm no habra ningun tipo de pitido
+ */
+
+//Definimos los pines que vamos a utilizar.
+int trigger=16;   //El pin 16 se corresponde con D0
+int echo=D5;       //D5 es el pin 14. Otra forma de declararlo, al seleccionar al placa Wemos ya sabe Arduino de que hablamos
+int sirena=5;     //Sirena conectada a D1
+
+//Definimos las variables
+int duracionPulso;  //Variable para leer en MicroSeg la longitud del pulso del sensor de distancia
+int distancia;      //Vriable para almacenar la operacion matematia que nos da la distancia del objeto
+int delayPitidos=0;  //Usamos esta variable para gestionar el delay entre pititdo y pitido que nos dará la frecuencia los mismos
+int velSonido=340;
+
+void setup() {
+  // Definimos entradas y salidas
+pinMode(trigger, OUTPUT);
+pinMode(echo, INPUT);
+pinMode(sirena, OUTPUT);
+Serial.begin(9600);
+
+}
+void loop() {
+ 
+ //Disparamos el trigger con un pulso de 10us
+ digitalWrite(trigger,LOW);
+ delayMicroseconds(5);
+ digitalWrite(trigger,HIGH);
+ delayMicroseconds(10);   // un pulso de 10 Microsegundos es suficiente para lanzar la medida
+ digitalWrite(trigger,LOW);
+
+ //Leemos el echo. Que es la duracion del pulso desde que sale hasta que vuelve
+duracionPulso=pulseIn(echo,HIGH); //Funcion que mide la duracion del pulso de entrada en estado HIGH.
+distancia=0.5*duracionPulso*velSonido*0.0001;   //e=v*t ->distancia= velocidad del sonido*el tiempo que tarda en ir y volver / 2
+Serial.print("La distancia es ");
+Serial.print(distancia);
+Serial.println(" cm.");
+// Serial.println(duracionPulso);     //A modo informativo por si queremos saber cuando milisegundos que tarda el pulso en ir y volver
+
+//Añadimos los pitidos de la sirena proporcional a la distancia
+delayPitidos=4*distancia+150;  //Esta formula se saca con al ec de la recta entre el delay-distancia
+Serial.println(delayPitidos);
+if (distancia<=5)   //Menos de 5 cm->pitido cte
+{
+  digitalWrite(sirena, HIGH);
+}
+if (distancia >=300)    //Mas de 300 cm no pita
+{
+  digitalWrite(sirena, LOW);
+}
+if ((distancia>5)&&(distancia<300))   //Dentro de nuestro rango la frecuancia del pitido proporcional ala distancia
+{
+digitalWrite(sirena, HIGH);
+delay(50);
+digitalWrite(sirena, LOW);
+delay(delayPitidos);
+}
+
+}
